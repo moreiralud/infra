@@ -1,0 +1,157 @@
+services:
+  # ---------- CLIENTE ----------
+  postgres-client:
+    image: postgres:16
+    container_name: postgres-client
+    environment:
+      POSTGRES_DB: clientes
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - postgres-client-data:/var/lib/postgresql/data
+    networks: [rede-tech]
+
+  client:
+    build: { context: ../client-service }
+    container_name: client-service
+    ports: ["8080:8080"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-client:5432/clientes
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on: [postgres-client]
+    networks: [rede-tech]
+
+  # ---------- PRODUTO ----------
+  postgres-product:
+    image: postgres:16
+    container_name: postgres-product
+    environment:
+      POSTGRES_DB: produtos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5433:5432"]
+    volumes:
+      - postgres-product-data:/var/lib/postgresql/data
+    networks: [rede-tech]
+
+  product:
+    build: { context: ../product-service }
+    container_name: product-service
+    ports: ["8081:8081"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-product:5432/produtos
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on: [postgres-product]
+    networks: [rede-tech]
+
+  # ---------- PEDIDO ----------
+  postgres-pedido:
+    image: postgres:16
+    container_name: postgres-pedido
+    environment:
+      POSTGRES_DB: pedidos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5434:5432"]
+    volumes:
+      - postgres-pedido-data:/var/lib/postgresql/data
+    networks: [rede-tech]
+
+  pedido:
+    build: { context: ../pedido-service }
+    container_name: pedido-service
+    ports: ["8082:8082"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedido:5432/pedidos
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on: [postgres-pedido]
+    networks: [rede-tech]
+
+  # ---------- PEDIDO-RECEIVER ----------
+  postgres-pedido-receiver:
+    image: postgres:16
+    container_name: postgres-pedido-receiver
+    environment:
+      POSTGRES_DB: pedidos_receiver
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5435:5432"]
+    volumes:
+      - postgres-pedido-receiver-data:/var/lib/postgresql/data
+    networks: [rede-tech]
+
+  pedido-receiver:
+    build: { context: ../pedido-receiver }
+    container_name: pedido-receiver-service
+    ports: ["8083:8083"]          # → mude para "8083:8080" se o app escutar em 8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedido-receiver:5432/pedidos_receiver
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on: [postgres-pedido-receiver]
+    networks: [rede-tech]
+
+  # ---------- PAGAMENTO ----------
+  postgres-payment:
+    image: postgres:15.4
+    container_name: postgres-payment
+    environment:
+      POSTGRES_DB: pagamentos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5436:5432"]
+    volumes:
+      - postgres-payment-data:/var/lib/postgresql/data
+    networks: [rede-tech]
+
+  payment:
+    build: { context: ../pagamento-service }
+    container_name: payment-service
+    ports: ["8084:8084"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payment:5432/pagamentos
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_FLYWAY_POSTGRESQL_COMPATIBLE_VERSIONS: 15 
+    depends_on: [postgres-payment]
+    networks: [rede-tech]
+
+  # ---------- ESTOQUE ----------
+  postgres-estoque:
+    image: postgres:15.4                # Flyway já reconhece 15.4; use 14 se preferir
+    container_name: postgres-estoque
+    environment:
+      POSTGRES_DB: estoque
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5437:5432"]                # porta externa 5437 só para debug local
+    volumes:
+      - postgres-estoque-data:/var/lib/postgresql/data
+    networks: [rede-tech]
+
+  estoque:
+    build: { context: ../estoque-service }
+    container_name: estoque-service
+    ports: ["8085:8085"]                # host 8085 → container 8085
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-estoque:5432/estoque
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_FLYWAY_POSTGRESQL_COMPATIBLE_VERSIONS: 15
+    depends_on: [postgres-estoque]
+    networks: [rede-tech]
+
+volumes:
+  postgres-client-data:
+  postgres-product-data:
+  postgres-pedido-data:
+  postgres-pedido-receiver-data:
+  postgres-payment-data:
+  postgres-estoque-data:
+
+networks:
+  rede-tech:
